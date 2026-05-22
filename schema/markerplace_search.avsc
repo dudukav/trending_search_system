@@ -1,0 +1,41 @@
+{
+  "type": "record",
+  "name": "SearchEvent",
+  "namespace": "marketplace.search",
+  "fields": [
+    {
+      "name": "event_id",
+      "type": "string"
+    },
+    {
+      "name": "query",
+      "type": "string"
+    },
+    {
+      "name": "user_id",
+      "type": ["null", "string"],
+      "default": null
+    },
+    {
+      "name": "ip_hash",
+      "type": ["null", "string"],
+      "default": null
+    },
+    {
+      "name": "timestamp",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      }
+    },
+    {
+      "name": "source",
+      "type": {
+        "type": "enum",
+        "name": "SearchSource",
+        "symbols": ["WEB", "IOS", "ANDROID", "UNKNOWN"]
+      },
+      "default": "UNKNOWN"
+    }
+  ]
+}

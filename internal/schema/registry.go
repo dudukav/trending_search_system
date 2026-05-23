@@ -42,7 +42,9 @@ func (c *RegistryClient) Latest(ctx context.Context, subject string) (SubjectVer
 	if err != nil {
 		return SubjectVersion{}, fmt.Errorf("fetch latest schema: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		body, _ := io.ReadAll(resp.Body)
@@ -75,7 +77,9 @@ func (c *RegistryClient) Register(ctx context.Context, subject string, schemaTex
 	if err != nil {
 		return 0, fmt.Errorf("register schema: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		body, _ := io.ReadAll(resp.Body)

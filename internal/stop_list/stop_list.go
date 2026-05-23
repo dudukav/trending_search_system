@@ -15,13 +15,13 @@ var (
 )
 
 type StopList struct {
-    mu    sync.RWMutex
-    rules map[uuid.UUID]StopRule
+	mu    sync.RWMutex
+	rules map[uuid.UUID]StopRule
 }
 
 func NewStoplist() *StopList {
 	return &StopList{
-		mu: sync.RWMutex{},
+		mu:    sync.RWMutex{},
 		rules: make(map[uuid.UUID]StopRule),
 	}
 }
@@ -31,16 +31,16 @@ func (s *StopList) Add(value string, matchType MatchType) (StopRule, error) {
 	defer s.mu.Unlock()
 
 	value = model.Normalize(value)
-    if value == "" {
-        return StopRule{}, ErrEmptyStopRule
-    }
+	if value == "" {
+		return StopRule{}, ErrEmptyStopRule
+	}
 
-    rule := StopRule{
-        ID:        uuid.New(),
-        Value:     value,
-        MatchType: matchType,
-        CreatedAt: time.Now().UTC(),
-    }
+	rule := StopRule{
+		ID:        uuid.New(),
+		Value:     value,
+		MatchType: matchType,
+		CreatedAt: time.Now().UTC(),
+	}
 
 	s.rules[rule.ID] = rule
 
@@ -61,25 +61,25 @@ func (s *StopList) Remove(id uuid.UUID) bool {
 
 func (s *StopList) Contains(query string) bool {
 	s.mu.RLock()
-	s.mu.RUnlock()
+	defer s.mu.RUnlock()
 
 	query = model.Normalize(query)
-    if query == "" {
-        return false
-    }
+	if query == "" {
+		return false
+	}
 
 	for _, rule := range s.rules {
 		switch rule.MatchType {
-        case MatchExact:
-            if query == rule.Value {
-                return true
-            }
+		case MatchExact:
+			if query == rule.Value {
+				return true
+			}
 
-        case MatchPhrase:
-            if phraseMatch(query, rule.Value) {
-                return true
-            }
-        }
+		case MatchPhrase:
+			if phraseMatch(query, rule.Value) {
+				return true
+			}
+		}
 	}
 
 	return false
@@ -87,7 +87,7 @@ func (s *StopList) Contains(query string) bool {
 
 func (s *StopList) List() []StopRule {
 	s.mu.RLock()
-	s.mu.RUnlock()
+	defer s.mu.RUnlock()
 
 	var stopRules []StopRule
 	for _, rule := range s.rules {
@@ -98,26 +98,26 @@ func (s *StopList) List() []StopRule {
 }
 
 func phraseMatch(query string, phrase string) bool {
-    queryTokens := strings.Fields(query)
-    phraseTokens := strings.Fields(phrase)
+	queryTokens := strings.Fields(query)
+	phraseTokens := strings.Fields(phrase)
 
-    if len(phraseTokens) == 0 || len(phraseTokens) > len(queryTokens) {
-        return false
-    }
+	if len(phraseTokens) == 0 || len(phraseTokens) > len(queryTokens) {
+		return false
+	}
 
-    for i := 0; i <= len(queryTokens)-len(phraseTokens); i++ {
-        matched := true
-        for j := range phraseTokens {
-            if queryTokens[i+j] != phraseTokens[j] {
-                matched = false
-                break
-            }
-        }
+	for i := 0; i <= len(queryTokens)-len(phraseTokens); i++ {
+		matched := true
+		for j := range phraseTokens {
+			if queryTokens[i+j] != phraseTokens[j] {
+				matched = false
+				break
+			}
+		}
 
-        if matched {
-            return true
-        }
-    }
+		if matched {
+			return true
+		}
+	}
 
-    return false
+	return false
 }

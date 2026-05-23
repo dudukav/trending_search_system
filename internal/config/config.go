@@ -11,7 +11,10 @@ const (
 	defaultHTTPAddr        = ":8080"
 	defaultKafkaBroker     = "localhost:9092"
 	defaultKafkaTopic      = "search-events"
+	defaultKafkaDLQTopic   = "search-events-dlq"
 	defaultKafkaGroupID    = "trending-search-service"
+	defaultSchemaRegistry  = ""
+	defaultSchemaSubject   = "search-events-value"
 	defaultWindowSize      = 5 * time.Minute
 	defaultBucketSize      = time.Second
 	defaultSnapshotTopSize = 1000
@@ -23,7 +26,10 @@ type Config struct {
 	HTTPAddr        string
 	KafkaBrokers    []string
 	KafkaTopic      string
+	KafkaDLQTopic   string
 	KafkaGroupID    string
+	SchemaRegistry  string
+	SchemaSubject   string
 	WindowSize      time.Duration
 	BucketSize      time.Duration
 	SnapshotTopSize int
@@ -38,7 +44,10 @@ func Load() Config {
 		HTTPAddr:        getEnvString("HTTP_ADDR", defaultHTTPAddr),
 		KafkaBrokers:    kafkaBrokers,
 		KafkaTopic:      getEnvString("KAFKA_TOPIC", defaultKafkaTopic),
+		KafkaDLQTopic:   getEnvString("KAFKA_DLQ_TOPIC", defaultKafkaDLQTopic),
 		KafkaGroupID:    getEnvString("KAFKA_GROUP_ID", defaultKafkaGroupID),
+		SchemaRegistry:  getEnvString("SCHEMA_REGISTRY_URL", defaultSchemaRegistry),
+		SchemaSubject:   getEnvString("SCHEMA_SUBJECT", defaultSchemaSubject),
 		WindowSize:      getEnvDuration("WINDOW_SIZE", defaultWindowSize),
 		BucketSize:      getEnvDuration("BUCKET_SIZE", defaultBucketSize),
 		SnapshotTopSize: getEnvInt("SNAPSHOT_TOP_SIZE", defaultSnapshotTopSize),

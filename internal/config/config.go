@@ -16,6 +16,7 @@ const (
 	defaultBucketSize      = time.Second
 	defaultSnapshotTopSize = 1000
 	defaultMaxLimit        = 100
+	defaultMaxPerIdentity  = 2
 )
 
 type Config struct {
@@ -27,6 +28,7 @@ type Config struct {
 	BucketSize      time.Duration
 	SnapshotTopSize int
 	MaxLimit        int
+	MaxPerIdentity  int
 }
 
 func Load() Config {
@@ -41,6 +43,7 @@ func Load() Config {
 		BucketSize:      getEnvDuration("BUCKET_SIZE", defaultBucketSize),
 		SnapshotTopSize: getEnvInt("SNAPSHOT_TOP_SIZE", defaultSnapshotTopSize),
 		MaxLimit:        getEnvInt("MAX_LIMIT", defaultMaxLimit),
+		MaxPerIdentity:  getEnvInt("MAX_PER_IDENTITY", defaultMaxPerIdentity),
 	}
 }
 

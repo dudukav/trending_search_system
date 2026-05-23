@@ -4,8 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
+	"os"
 	"search_trend/internal/aggregator"
 	"search_trend/internal/config"
 	"search_trend/internal/transport"
@@ -16,11 +17,16 @@ const shutdownTimeout = 10 * time.Second
 
 type App struct {
 	aggregator      aggregator.Aggregator
+	logger          *slog.Logger
 	server          *http.Server
 	rebuildInterval time.Duration
 }
 
-func Build(cfg config.Config) (*App, error) {
+func Build(cfg config.Config, logger *slog.Logger) (*App, error) {
+	if logger == nil {
+		logger = slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	}
+
 	agg := aggregator.NewAggregator(
 		cfg.WindowSize,
 		cfg.BucketSize,
@@ -28,13 +34,14 @@ func Build(cfg config.Config) (*App, error) {
 		cfg.MaxPerIdentity,
 	)
 
-	handler, err := transport.New(agg, cfg.MaxLimit)
+	handler, err := transport.New(agg, cfg.MaxLimit, logger)
 	if err != nil {
 		return nil, fmt.Errorf("create handler: %w", err)
 	}
 
 	return &App{
 		aggregator:      agg,
+		logger:          logger,
 		server:          transport.NewServer(cfg.HTTPAddr, handler),
 		rebuildInterval: cfg.BucketSize,
 	}, nil
@@ -46,14 +53,16 @@ func (a *App) Run(ctx context.Context) error {
 
 	errCh := make(chan error, 1)
 	go func() {
-		log.Printf("http server listening on %s", a.server.Addr)
+		a.logger.Info("http server listening", "addr", a.server.Addr)
 		errCh <- a.server.ListenAndServe()
 	}()
 
 	select {
 	case <-ctx.Done():
+		a.logger.Info("shutdown signal received")
 	case err := <-errCh:
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			a.logger.Error("http server failed", "error", err)
 			return fmt.Errorf("http server failed: %w", err)
 		}
 	}
@@ -62,10 +71,11 @@ func (a *App) Run(ctx context.Context) error {
 	defer cancel()
 
 	if err := a.server.Shutdown(shutdownCtx); err != nil {
+		a.logger.Error("http server shutdown failed", "error", err)
 		return fmt.Errorf("shutdown http server: %w", err)
 	}
 
-	log.Print("http server stopped")
+	a.logger.Info("http server stopped")
 	return nil
 }
 

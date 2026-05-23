@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"search_trend/internal/app"
@@ -11,16 +11,22 @@ import (
 )
 
 func main() {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+
 	cfg := config.Load()
-	application, err := app.Build(cfg)
+	application, err := app.Build(cfg, logger)
 	if err != nil {
-		log.Fatalf("build app: %v", err)
+		logger.Error("build app failed", "error", err)
+		os.Exit(1)
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
 	if err := application.Run(ctx); err != nil {
-		log.Fatalf("run app: %v", err)
+		logger.Error("run app failed", "error", err)
+		os.Exit(1)
 	}
 }
